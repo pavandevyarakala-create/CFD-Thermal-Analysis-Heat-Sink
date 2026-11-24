@@ -48,7 +48,7 @@ def run_grid_refinement_study():
         th = Thermal2DSolver(case, grid, ns.u, ns.v)
         th.solve(method="implicit")
 
-        post = PostProcessor(case, grid, ns.u, ns.v, ns.p, th.T)
+        post = PostProcessor(case, grid, ns.u, ns.v, ns.p, th.T, ns.psi)
         metrics = post.compute_global_performance_metrics()
 
         n_nodes = cfg["nx"] * cfg["ny"]
@@ -67,7 +67,8 @@ def run_grid_refinement_study():
             "delta_p_Pa": metrics["pressure_drop_Pa"],
             "heat_dissipated_W": metrics["heat_dissipated_W"],
             "t_bulk_outlet_K": metrics["t_bulk_outlet_K"],
-            "max_mass_error_pct": metrics["max_mass_error_percent"]
+            "quadrature_mass_error_pct": metrics["quadrature_mass_error_percent"],
+            "streamfunction_flux_error_pct": metrics["streamfunction_flux_error_percent"]
         }
         results.append(res_entry)
         print(f"  -> Nu_avg = {metrics['nu_average']:.4f} | Delta P = {metrics['pressure_drop_Pa']:.4f} Pa | Q = {metrics['heat_dissipated_W']:.4f} W")

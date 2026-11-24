@@ -75,13 +75,14 @@ def run_baseline_simulation():
     print("-" * 75)
 
     # 4. Post-processing and Engineering Metrics
-    post = PostProcessor(case, grid, ns_solver.u, ns_solver.v, ns_solver.p, th_solver.T)
+    post = PostProcessor(case, grid, ns_solver.u, ns_solver.v, ns_solver.p, th_solver.T, ns_solver.psi)
     metrics = post.compute_global_performance_metrics()
     ht_data = post.compute_local_heat_transfer()
 
     print("POST-PROCESSING & PERFORMANCE METRICS:")
     print(f"Mass Flow Rate (m_dot): {metrics['m_dot_kg_s']:.5e} kg/s")
-    print(f"Mass Conservation Err : {metrics['max_mass_error_percent']:.4e} % (machine precision / exact)")
+    print(f"Streamfunction Flux Cons: {metrics['streamfunction_flux_error_percent']:.4e} % (analytic machine precision)")
+    print(f"Velocity Quadrature Err : {metrics['quadrature_mass_error_percent']:.4f} % (O(dy^2) trapezoidal integration)")
     print(f"Bulk Fluid Temp Rise  : {metrics['t_bulk_inlet_K']:.2f} K -> {metrics['t_bulk_outlet_K']:.2f} K (delta T = {metrics['temperature_rise_K']:.2f} K)")
     print(f"Total Heat Dissipated : Q = {metrics['heat_dissipated_W']:.3f} W (Wall Integrated: {metrics['heat_wall_integrated_W']:.3f} W)")
     print(f"Energy Balance Error  : {metrics['energy_balance_error_percent']:.2f} %")
@@ -130,7 +131,8 @@ def run_baseline_simulation():
         "Re_Dh": case.reynolds_dh,
         "Pe_gap": case.peclet_gap,
         "mass_flow_rate_kg_s": metrics["m_dot_kg_s"],
-        "max_mass_error_percent": metrics["max_mass_error_percent"],
+        "streamfunction_flux_error_percent": metrics["streamfunction_flux_error_percent"],
+        "quadrature_mass_error_percent": metrics["quadrature_mass_error_percent"],
         "t_bulk_outlet_K": metrics["t_bulk_outlet_K"],
         "temperature_rise_K": metrics["temperature_rise_K"],
         "heat_dissipated_W": metrics["heat_dissipated_W"],

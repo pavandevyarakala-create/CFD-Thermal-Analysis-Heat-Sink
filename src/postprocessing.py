@@ -1,7 +1,7 @@
 """Post-processing, thermodynamic calculations, and mass/energy conservation verification."""
 
 import numpy as np
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from .parameters import SimulationCase
 from .grid import StructuredGrid2D
 
@@ -10,13 +10,15 @@ class PostProcessor:
     """Calculates engineering heat transfer metrics, pressure drops, and conservation checks."""
 
     def __init__(self, case: SimulationCase, grid: StructuredGrid2D,
-                 u: np.ndarray, v: np.ndarray, p: np.ndarray, T: np.ndarray):
+                 u: np.ndarray, v: np.ndarray, p: np.ndarray, T: np.ndarray,
+                 psi: Optional[np.ndarray] = None):
         self.case = case
         self.grid = grid
         self.u = u
         self.v = v
         self.p = p
         self.T = T
+        self.psi = psi
 
         self.dx = grid.dx
         self.dy = grid.dy
@@ -26,26 +28,40 @@ class PostProcessor:
         self.depth = case.geometry.fin_depth
         self.dh = case.geometry.hydraulic_diameter
 
-    def verify_mass_conservation(self) -> Dict[str, Any]:
+    def verify_mass_conservation(self, psi: Optional[np.ndarray] = None) -> Dict[str, Any]:
         """
-        Verify continuity by integrating mass flux across each streamwise vertical slice:
-        m_dot(x) = depth * rho * integral(u(x, y) dy)
+        Verify continuity and mass conservation via two distinct physical metrics:
+        1. Streamfunction volumetric flux:
+           Q(x) = psi(x, L) - psi(x, 0), which theoretically equals U_in * L exactly.
+        2. Post-processed velocity quadrature:
+           m_dot(x) = depth * rho * integral(u(x, y) dy) via composite trapezoidal rule.
         """
+        # 1. Post-processed velocity quadrature
         m_dot_x = np.zeros(self.grid.nx)
         for i in range(self.grid.nx):
-            # Trapezoidal integration across y
             m_dot_x[i] = self.depth * self.rho * np.trapezoid(self.u[:, i], self.grid.y)
 
-        m_dot_inlet = m_dot_x[0]
-        rel_errors = np.abs(m_dot_x - m_dot_inlet) / (m_dot_inlet + 1e-12) * 100.0
-        max_error = float(np.max(rel_errors))
-        mean_error = float(np.mean(rel_errors))
+        # Theoretical exact mass flow rate
+        m_dot_exact = self.depth * self.rho * (self.case.bc.u_inlet * self.case.geometry.height)
+        quad_rel_errors = np.abs(m_dot_x - m_dot_exact) / m_dot_exact * 100.0
+        max_quad_error = float(np.max(quad_rel_errors))
+        mean_quad_error = float(np.mean(quad_rel_errors))
+
+        # 2. Streamfunction flux identity (if psi is provided)
+        psi_error_max = 0.0
+        if psi is not None:
+            psi_flux = psi[-1, :] - psi[0, :]
+            exact_psi_flux = self.case.bc.u_inlet * self.case.geometry.height
+            psi_rel_errors = np.abs(psi_flux - exact_psi_flux) / exact_psi_flux * 100.0
+            psi_error_max = float(np.max(psi_rel_errors))
 
         return {
-            "m_dot_inlet": float(m_dot_inlet),
+            "m_dot_exact": float(m_dot_exact),
+            "m_dot_inlet_quad": float(m_dot_x[0]),
             "m_dot_x": m_dot_x,
-            "max_rel_error_percent": max_error,
-            "mean_rel_error_percent": mean_error
+            "max_quadrature_error_percent": max_quad_error,
+            "mean_quadrature_error_percent": mean_quad_error,
+            "max_streamfunction_flux_error_percent": psi_error_max
         }
 
     def compute_bulk_temperature(self) -> np.ndarray:
@@ -105,8 +121,8 @@ class PostProcessor:
 
     def compute_global_performance_metrics(self) -> Dict[str, float]:
         """Compute integrated heat dissipation, thermal resistance, pressure drop, and pumping power."""
-        mass_info = self.verify_mass_conservation()
-        m_dot = mass_info["m_dot_inlet"]
+        mass_info = self.verify_mass_conservation(self.psi)
+        m_dot = mass_info["m_dot_exact"]
         t_bulk = self.compute_bulk_temperature()
 
         t_inlet = t_bulk[0]
@@ -154,5 +170,6 @@ class PostProcessor:
             "f_darcy": float(f_darcy),
             "f_Re": f_re,
             "nu_average": nu_avg,
-            "max_mass_error_percent": mass_info["max_rel_error_percent"]
+            "quadrature_mass_error_percent": mass_info["max_quadrature_error_percent"],
+            "streamfunction_flux_error_percent": mass_info["max_streamfunction_flux_error_percent"]
         }
