@@ -3,7 +3,7 @@
 **Author:** Pavan Dev (CO24BTECH11025)  
 **Program:** B.Tech in Computational Engineering  
 **Target Application:** Electronics Thermal Management & Industrial Air Handling (R&D Engineering — Taikisha Ltd.)  
-**Repository:** [CFD-Thermal-Analysis-Heat-Sink](https://github.com/pavandevyarakala/CFD-Thermal-Analysis-Heat-Sink)  
+**Repository:** [CFD-Thermal-Analysis-Heat-Sink](https://github.com/pavandevyarakala-create/CFD-Thermal-Analysis-Heat-Sink)  
 **Date:** November 2026  
 
 ---

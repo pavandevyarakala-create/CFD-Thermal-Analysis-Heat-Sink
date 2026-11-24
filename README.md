@@ -167,7 +167,7 @@ CFD-Thermal-Analysis-Heat-Sink/
 
 ### 2. Clone Repository & Setup Environment
 ```bash
-git clone https://github.com/pavandevyarakala/CFD-Thermal-Analysis-Heat-Sink.git
+git clone https://github.com/pavandevyarakala-create/CFD-Thermal-Analysis-Heat-Sink.git
 cd CFD-Thermal-Analysis-Heat-Sink
 
 # Create and activate virtual environment
@@ -258,4 +258,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 B.Tech in Computational Engineering  
 *Candidate for Industrial Research & Development Engineer roles at Taikisha Ltd.*  
 - **Email:** pavandevyarakala@gmail.com  
-- **GitHub:** [@pavandevyarakala](https://github.com/pavandevyarakala)  
+- **GitHub:** [@pavandevyarakala-create](https://github.com/pavandevyarakala-create)  
